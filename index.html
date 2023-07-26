@@ -147,6 +147,85 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/07/24/week2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="时骅">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="暑期实习博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/07/24/week2/" class="post-title-link" itemprop="url">伯努利模型</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-07-24 15:30:42" itemprop="dateCreated datePublished" datetime="2023-07-24T15:30:42+08:00">2023-07-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-07-26 15:37:55" itemprop="dateModified" datetime="2023-07-26T15:37:55+08:00">2023-07-26</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>说明<strong>伯努利模型</strong>的<strong>极大似然估计</strong>以及<strong>贝叶斯估计</strong>中的统计学习方法三要素。<br>伯努利模型是定义在取值为0与1的随机变量上的概率分布。假设观测到伯努利模型n次独立的数据生成结果，其中k次的结果为1，这时可以用极大似然估计或贝叶斯估计来估计结果为1的概率。</p>
+<h3 id="伯努利模型"><a href="#伯努利模型" class="headerlink" title="伯努利模型"></a>伯努利模型</h3><p>在统计学中，伯努利模型是一种二元随机变量的概率模型，用于描述只有两种可能结果的随机试验。<br>定义随机变量A为一次伯努利试验的结果，A的取值为[0,1]，概率分布为$P(A)$:</p>
+<script type="math/tex; mode=display">P(A=1)=\theta</script><script type="math/tex; mode=display">P(A=0)=1-\theta</script><p>$n$重伯努利试验中$A$发生$k$次记作$ P_{n} (k)=C_{n}^{k}P^{k}(1-P)^{n-k} $，又称二项概率公式。<br>下文统一用$\theta$的值表示结果为1的概率。</p>
+<h3 id="三要素"><a href="#三要素" class="headerlink" title="三要素"></a>三要素</h3><p>伯努利模型的极大似然估计以及贝叶斯估计中的统计学习方法三要素分别是<strong>模型</strong>，<strong>策略</strong>和<strong>算法</strong>。<br><strong>模型</strong>：上文提到的伯努利模型，即定义在取值为0与1的随机变量上的概率分布。<br><strong>策略</strong>：极大似然估计和贝叶斯估计的策略都是对数损失函数（贝叶斯估计使用的是结构风险最小化）。<br><strong>算法</strong>：极大似然估计所使用的算法是求取经验风险函数的极小值，贝叶斯估计所使用的算法是求取参数的后验分布，然后计算其期望。</p>
+<h3 id="极大似然估计法"><a href="#极大似然估计法" class="headerlink" title="极大似然估计法"></a>极大似然估计法</h3><p>极大似然估计的目标是找到一个参数值$\theta$，使得在给定观察结果的条件下，伯努利模型的似然函数取得最大值。似然函数表示给定参数值下观察到观测结果的概率。<br>对于伯努利模型，似然函数可以表示为：</p>
+<script type="math/tex; mode=display">L(\theta)= \prod_{n}^{i=1}P(A_{i})=\theta^{k}(1-\theta)^{n-k}</script><p>为了求解极大似然估计，我们需要最大化似然函数。通常，为了方便计算，我们会对似然函数取对数，得到对数似然函数:</p>
+<script type="math/tex; mode=display">\log_{}{L(\theta )} = k\log_{}{\theta } +(n-k)\log_{}{(1-\theta )}</script><p>然后对其求导：</p>
+<script type="math/tex; mode=display">\frac{\partial \log_{}{L(\theta )} }{\partial \theta } =\frac{k}{\theta } -\frac{n-k}{1-\theta }</script><p>令$ \frac{\partial \log_{}{L(\theta )} }{\partial \theta } = 0 $，得$\theta =\frac{k}{n}$。<br>记为$ \theta = argmax_{\theta}(L(\theta))$。<br>如果模型为伯努利模型，损失函数是对数损失函数，则求解经验风险最小化等价于最大化似然函数。</p>
+<h3 id="贝叶斯估计法"><a href="#贝叶斯估计法" class="headerlink" title="贝叶斯估计法"></a>贝叶斯估计法</h3><p>在贝叶斯估计中，我们将参数$\theta$视为一个随机变量，而不是一个固定但未知的值。我们先引入先验分布，然后，通过贝叶斯定理，我们可以计算在给定观测数据的条件下，参数$\theta$的后验分布。<br>常用的先验分布是Beta分布，因为它是伯努利模型的共轭先验分布。即：</p>
+<script type="math/tex; mode=display">f(\theta \mid \alpha ,\beta )=\frac{1}{B(\alpha ,\beta )}\theta ^{\alpha -1}(1-\theta)^{\beta -1}</script><p>那么根据贝叶斯定理，其后验分布为：</p>
+<script type="math/tex; mode=display">P(\theta|A_{1},A_{2}...A_{n})=\frac{P(A_{1},A_{2},...A_{n}|\theta)f(\theta)}{P(A_{1},A_{2}, ...A_{n})}\propto P(A_{1},A_{2},...A_{n}|\theta)f(\theta)</script><p>这里正比于的符号，实际上表示后者是前者的核。<br>似然函数</p>
+<script type="math/tex; mode=display">P(A_{1},A_{2},...A_{n}|\theta)=\theta^{k}(1-\theta)^{n-k}</script><p>故</p>
+<script type="math/tex; mode=display">P(\theta|A_{1},A_{2}...A_{n})\propto \theta^{k}(1-\theta)^{n-k}\cdot \theta ^{\alpha -1}(1-\theta)^{\beta -1}</script><p>即</p>
+<script type="math/tex; mode=display">P(\theta|A_{1},A_{2}...A_{n})\propto \theta^{k+\alpha -1}(1-\theta)^{n-k+\beta -1}</script><p>可以看出后验分布其实是Beta分布的核，具体来说是服从参数是$k+\alpha$和$n-k+\beta$的Beta分布。<br>借助Beta分布的期望公式（$E(\theta)=\frac{\alpha }{\alpha +\beta } $），可以得到估计量的值：</p>
+<script type="math/tex; mode=display">\theta =\frac{k+\alpha }{k+\alpha +n-k+\beta } =\frac{k+\alpha }{n+\alpha +\beta }</script><p>已知观察结果的条件下使得$\theta$出现概率最大的值。<br>特别的，当$\alpha=\beta=1$时，先验分布服从均匀分布，结果为1的概率$\theta=\frac{k+1}{n+2}\approx \frac{k}{n}$，与最大似然估计法结果一致。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2023/07/17/my-first-blog/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -286,7 +365,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">1</span>
+          <span class="site-state-item-count">2</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
