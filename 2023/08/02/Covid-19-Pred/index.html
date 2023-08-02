@@ -20,28 +20,32 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta property="og:type" content="website">
-<meta property="og:title" content="暑期实习博客">
-<meta property="og:url" content="http://example.com/index.html">
+  <meta name="description" content="学习目标:模型拟合：用深度神经网络 (DNN)拟合一个回归模型。掌握技巧：熟悉并掌握DNN模型训练的基本技巧。提高PyTorch的使用熟练度。 Import packages12345678910111213141516# Numerical Operationsimport mathimport numpy as np# Reading&#x2F;Writing Dataimport pandas as">
+<meta property="og:type" content="article">
+<meta property="og:title" content="COVID-19 病例预测 (回归)">
+<meta property="og:url" content="http://example.com/2023/08/02/Covid-19-Pred/index.html">
 <meta property="og:site_name" content="暑期实习博客">
+<meta property="og:description" content="学习目标:模型拟合：用深度神经网络 (DNN)拟合一个回归模型。掌握技巧：熟悉并掌握DNN模型训练的基本技巧。提高PyTorch的使用熟练度。 Import packages12345678910111213141516# Numerical Operationsimport mathimport numpy as np# Reading&#x2F;Writing Dataimport pandas as">
 <meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-08-02T06:51:44.014Z">
+<meta property="article:modified_time" content="2023-08-02T08:28:57.072Z">
 <meta property="article:author" content="时骅">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="http://example.com/">
+<link rel="canonical" href="http://example.com/2023/08/02/Covid-19-Pred/">
 
 
 <script id="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome : true,
-    isPost : false,
+    isHome : false,
+    isPost : true,
     lang   : 'zh-CN'
   };
 </script>
 
-  <title>暑期实习博客</title>
+  <title>COVID-19 病例预测 (回归) | 暑期实习博客</title>
   
 
 
@@ -141,9 +145,10 @@
         <div class="content-wrap">
           
 
-          <div class="content index posts-expand">
+          <div class="content post posts-expand">
             
-      
+
+    
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
@@ -159,10 +164,9 @@
       <meta itemprop="name" content="暑期实习博客">
     </span>
       <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/08/02/Covid-19-Pred/" class="post-title-link" itemprop="url">COVID-19 病例预测 (回归)</a>
-        </h2>
+        <h1 class="post-title" itemprop="name headline">
+          COVID-19 病例预测 (回归)
+        </h1>
 
         <div class="post-meta">
             <span class="post-meta-item">
@@ -186,7 +190,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>学习目标:<br>模型拟合：用深度神经网络 (DNN)拟合一个回归模型。<br>掌握技巧：<br>熟悉并掌握DNN模型训练的基本技巧。<br>提高PyTorch的使用熟练度。</p>
+        <p>学习目标:<br>模型拟合：用深度神经网络 (DNN)拟合一个回归模型。<br>掌握技巧：<br>熟悉并掌握DNN模型训练的基本技巧。<br>提高PyTorch的使用熟练度。</p>
 <h3 id="Import-packages"><a href="#Import-packages" class="headerlink" title="Import packages"></a>Import packages</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Numerical Operations</span></span><br><span class="line"><span class="keyword">import</span> math</span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"><span class="comment"># Reading/Writing Data</span></span><br><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> csv</span><br><span class="line"></span><br><span class="line"><span class="comment"># For Progress Bar</span></span><br><span class="line"><span class="keyword">from</span> tqdm <span class="keyword">import</span> tqdm</span><br><span class="line"></span><br><span class="line"><span class="comment"># Pytorch</span></span><br><span class="line"><span class="keyword">import</span> torch </span><br><span class="line"><span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn</span><br><span class="line"><span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> Dataset, DataLoader, random_split</span><br></pre></td></tr></table></figure>
 <h3 id="Some-Utility-Functions"><a href="#Some-Utility-Functions" class="headerlink" title="Some Utility Functions"></a>Some Utility Functions</h3><p>same_seed函数用于复现实验结果。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">same_seed</span>(<span class="params">seed</span>): </span><br><span class="line">    <span class="string">&#x27;&#x27;&#x27;Fixes random number generator seeds for reproducibility.&#x27;&#x27;&#x27;</span></span><br><span class="line">    torch.backends.cudnn.deterministic = <span class="literal">True</span></span><br><span class="line">    torch.backends.cudnn.benchmark = <span class="literal">False</span></span><br><span class="line">    np.random.seed(seed)</span><br><span class="line">    torch.manual_seed(seed)</span><br><span class="line">    <span class="keyword">if</span> torch.cuda.is_available():</span><br><span class="line">        torch.cuda.manual_seed_all(seed)</span><br></pre></td></tr></table></figure><br>下面的函数用于将提供的训练数据分割成训练集和验证集。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">train_valid_split</span>(<span class="params">data_set, valid_ratio, seed</span>):</span><br><span class="line">    <span class="string">&#x27;&#x27;&#x27;Split provided training data into training set and validation set&#x27;&#x27;&#x27;</span></span><br><span class="line">    valid_set_size = <span class="built_in">int</span>(valid_ratio * <span class="built_in">len</span>(data_set)) </span><br><span class="line">    train_set_size = <span class="built_in">len</span>(data_set) - valid_set_size</span><br><span class="line">    train_set, valid_set = random_split(data_set, [train_set_size, valid_set_size],</span><br><span class="line">                                        generator=torch.Generator().manual_seed(seed))</span><br><span class="line">    <span class="keyword">return</span> np.array(train_set), np.array(valid_set)</span><br></pre></td></tr></table></figure><br>下面函数用于对测试集进行预测。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">predict</span>(<span class="params">test_loader, model, device</span>): </span><br><span class="line">    model.<span class="built_in">eval</span>() <span class="comment"># Set your model to evaluation mode.</span></span><br><span class="line">    preds = []</span><br><span class="line">    <span class="keyword">for</span> x <span class="keyword">in</span> tqdm(test_loader):</span><br><span class="line">        x = x.to(device)                        </span><br><span class="line">        <span class="keyword">with</span> torch.no_grad():                   </span><br><span class="line">            pred = model(x)                     </span><br><span class="line">            preds.append(pred.detach().cpu())   </span><br><span class="line">    preds = torch.cat(preds, dim=<span class="number">0</span>).numpy()  </span><br><span class="line">    <span class="keyword">return</span> preds</span><br></pre></td></tr></table></figure></p>
 <h3 id="Dataset"><a href="#Dataset" class="headerlink" title="Dataset"></a>Dataset</h3><p>这个类是一个自定义的数据集类，用于加载COVID-19数据集。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">COVID19Dataset</span>(<span class="title class_ inherited__">Dataset</span>):</span><br><span class="line">    <span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line"><span class="string">    x: Features.</span></span><br><span class="line"><span class="string">    y: Targets, if none, do prediction.</span></span><br><span class="line"><span class="string">    &#x27;&#x27;&#x27;</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, x, y=<span class="literal">None</span></span>):</span><br><span class="line">        <span class="keyword">if</span> y <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">            self.y = y</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            self.y = torch.FloatTensor(y)</span><br><span class="line">        self.x = torch.FloatTensor(x)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__getitem__</span>(<span class="params">self, idx</span>):</span><br><span class="line">        <span class="keyword">if</span> self.y <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">            <span class="keyword">return</span> self.x[idx]</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">return</span> self.x[idx], self.y[idx]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__len__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">len</span>(self.x)</span><br></pre></td></tr></table></figure></p>
@@ -198,177 +202,30 @@
 <h3 id="Start-training"><a href="#Start-training" class="headerlink" title="Start training"></a>Start training</h3><p>利用之前拟好好的模型进行深度训练<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">model = My_Model(input_dim=x_train.shape[<span class="number">1</span>]).to(device) </span><br><span class="line">train_losses, val_losses = trainer(train_loader, valid_loader, model, config, device)</span><br></pre></td></tr></table></figure></p>
 <h3 id="Prediction"><a href="#Prediction" class="headerlink" title="Prediction"></a>Prediction</h3><p>最终保存预测结果<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">save_pred</span>(<span class="params">preds, file</span>):</span><br><span class="line">    <span class="string">&#x27;&#x27;&#x27; Save predictions to specified file &#x27;&#x27;&#x27;</span></span><br><span class="line">    <span class="keyword">with</span> <span class="built_in">open</span>(file, <span class="string">&#x27;w&#x27;</span>) <span class="keyword">as</span> fp:</span><br><span class="line">        writer = csv.writer(fp)</span><br><span class="line">        writer.writerow([<span class="string">&#x27;id&#x27;</span>, <span class="string">&#x27;tested_positive&#x27;</span>])</span><br><span class="line">        <span class="keyword">for</span> i, p <span class="keyword">in</span> <span class="built_in">enumerate</span>(preds):</span><br><span class="line">            writer.writerow([i, p])</span><br><span class="line"></span><br><span class="line">model = My_Model(input_dim=x_train.shape[<span class="number">1</span>]).to(device)</span><br><span class="line">model.load_state_dict(torch.load(config[<span class="string">&#x27;save_path&#x27;</span>]))</span><br><span class="line">preds = predict(test_loader, model, device) </span><br><span class="line">save_pred(preds, <span class="string">&#x27;pred.csv&#x27;</span>)      </span><br></pre></td></tr></table></figure></p>
 
-      
     </div>
 
     
     
     
+
       <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/07/24/week2/">
+        
 
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="时骅">
-      <meta itemprop="description" content="">
-    </span>
 
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="暑期实习博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/07/24/week2/" class="post-title-link" itemprop="url">伯努利模型</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-07-24 15:30:42" itemprop="dateCreated datePublished" datetime="2023-07-24T15:30:42+08:00">2023-07-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-07-26 15:37:55" itemprop="dateModified" datetime="2023-07-26T15:37:55+08:00">2023-07-26</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>说明<strong>伯努利模型</strong>的<strong>极大似然估计</strong>以及<strong>贝叶斯估计</strong>中的统计学习方法三要素。<br>伯努利模型是定义在取值为0与1的随机变量上的概率分布。假设观测到伯努利模型n次独立的数据生成结果，其中k次的结果为1，这时可以用极大似然估计或贝叶斯估计来估计结果为1的概率。</p>
-<h3 id="伯努利模型"><a href="#伯努利模型" class="headerlink" title="伯努利模型"></a>伯努利模型</h3><p>在统计学中，伯努利模型是一种二元随机变量的概率模型，用于描述只有两种可能结果的随机试验。<br>定义随机变量A为一次伯努利试验的结果，A的取值为[0,1]，概率分布为$P(A)$:</p>
-<script type="math/tex; mode=display">P(A=1)=\theta</script><script type="math/tex; mode=display">P(A=0)=1-\theta</script><p>$n$重伯努利试验中$A$发生$k$次记作$ P_{n} (k)=C_{n}^{k}P^{k}(1-P)^{n-k} $，又称二项概率公式。<br>下文统一用$\theta$的值表示结果为1的概率。</p>
-<h3 id="三要素"><a href="#三要素" class="headerlink" title="三要素"></a>三要素</h3><p>伯努利模型的极大似然估计以及贝叶斯估计中的统计学习方法三要素分别是<strong>模型</strong>，<strong>策略</strong>和<strong>算法</strong>。<br><strong>模型</strong>：上文提到的伯努利模型，即定义在取值为0与1的随机变量上的概率分布。<br><strong>策略</strong>：极大似然估计和贝叶斯估计的策略都是对数损失函数（贝叶斯估计使用的是结构风险最小化）。<br><strong>算法</strong>：极大似然估计所使用的算法是求取经验风险函数的极小值，贝叶斯估计所使用的算法是求取参数的后验分布，然后计算其期望。</p>
-<h3 id="极大似然估计法"><a href="#极大似然估计法" class="headerlink" title="极大似然估计法"></a>极大似然估计法</h3><p>极大似然估计的目标是找到一个参数值$\theta$，使得在给定观察结果的条件下，伯努利模型的似然函数取得最大值。似然函数表示给定参数值下观察到观测结果的概率。<br>对于伯努利模型，似然函数可以表示为：</p>
-<script type="math/tex; mode=display">L(\theta)= \prod_{n}^{i=1}P(A_{i})=\theta^{k}(1-\theta)^{n-k}</script><p>为了求解极大似然估计，我们需要最大化似然函数。通常，为了方便计算，我们会对似然函数取对数，得到对数似然函数:</p>
-<script type="math/tex; mode=display">\log_{}{L(\theta )} = k\log_{}{\theta } +(n-k)\log_{}{(1-\theta )}</script><p>然后对其求导：</p>
-<script type="math/tex; mode=display">\frac{\partial \log_{}{L(\theta )} }{\partial \theta } =\frac{k}{\theta } -\frac{n-k}{1-\theta }</script><p>令$ \frac{\partial \log_{}{L(\theta )} }{\partial \theta } = 0 $，得$\theta =\frac{k}{n}$。<br>记为$ \theta = argmax_{\theta}(L(\theta))$。<br>如果模型为伯努利模型，损失函数是对数损失函数，则求解经验风险最小化等价于最大化似然函数。</p>
-<h3 id="贝叶斯估计法"><a href="#贝叶斯估计法" class="headerlink" title="贝叶斯估计法"></a>贝叶斯估计法</h3><p>在贝叶斯估计中，我们将参数$\theta$视为一个随机变量，而不是一个固定但未知的值。我们先引入先验分布，然后，通过贝叶斯定理，我们可以计算在给定观测数据的条件下，参数$\theta$的后验分布。<br>常用的先验分布是Beta分布，因为它是伯努利模型的共轭先验分布。即：</p>
-<script type="math/tex; mode=display">f(\theta \mid \alpha ,\beta )=\frac{1}{B(\alpha ,\beta )}\theta ^{\alpha -1}(1-\theta)^{\beta -1}</script><p>那么根据贝叶斯定理，其后验分布为：</p>
-<script type="math/tex; mode=display">P(\theta|A_{1},A_{2}...A_{n})=\frac{P(A_{1},A_{2},...A_{n}|\theta)f(\theta)}{P(A_{1},A_{2}, ...A_{n})}\propto P(A_{1},A_{2},...A_{n}|\theta)f(\theta)</script><p>这里正比于的符号，实际上表示后者是前者的核。<br>似然函数</p>
-<script type="math/tex; mode=display">P(A_{1},A_{2},...A_{n}|\theta)=\theta^{k}(1-\theta)^{n-k}</script><p>故</p>
-<script type="math/tex; mode=display">P(\theta|A_{1},A_{2}...A_{n})\propto \theta^{k}(1-\theta)^{n-k}\cdot \theta ^{\alpha -1}(1-\theta)^{\beta -1}</script><p>即</p>
-<script type="math/tex; mode=display">P(\theta|A_{1},A_{2}...A_{n})\propto \theta^{k+\alpha -1}(1-\theta)^{n-k+\beta -1}</script><p>可以看出后验分布其实是Beta分布的核，具体来说是服从参数是$k+\alpha$和$n-k+\beta$的Beta分布。<br>借助Beta分布的期望公式（$E(\theta)=\frac{\alpha }{\alpha +\beta } $），可以得到估计量的值：</p>
-<script type="math/tex; mode=display">\theta =\frac{k+\alpha }{k+\alpha +n-k+\beta } =\frac{k+\alpha }{n+\alpha +\beta }</script><p>已知观察结果的条件下使得$\theta$出现概率最大的值。<br>特别的，当$\alpha=\beta=1$时，先验分布服从均匀分布，结果为1的概率$\theta=\frac{k+1}{n+2}\approx \frac{k}{n}$，与最大似然估计法结果一致。</p>
-
-      
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/07/24/week2/" rel="prev" title="伯努利模型">
+      <i class="fa fa-chevron-left"></i> 伯努利模型
+    </a></div>
+      <div class="post-nav-item"></div>
     </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
       </footer>
+    
   </article>
   
   
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/07/17/my-first-blog/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="时骅">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="暑期实习博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/07/17/my-first-blog/" class="post-title-link" itemprop="url">Tensor与Autograd实现线性回归训练</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-07-17 20:37:18" itemprop="dateCreated datePublished" datetime="2023-07-17T20:37:18+08:00">2023-07-17</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-07-20 19:14:01" itemprop="dateModified" datetime="2023-07-20T19:14:01+08:00">2023-07-20</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>不使用深度模型框架，只利用<strong>Tensor</strong>和<strong>Autograd</strong>实现一个<strong>线性回归</strong>的训练，要求有输入输出。</p>
-<h3 id="模型定义"><a href="#模型定义" class="headerlink" title="模型定义"></a>模型定义</h3><p>线性回归假设输出与各个输入之间是线性关系：</p>
-<script type="math/tex; mode=display">\hat{y} = x_{1} \omega _{1} + x_{2} \omega _{2} + x_{3} \omega _{3} + b</script><p>其中$ \omega $是权重，$ b $是偏差，且均为标量，他们是线性回归模型的参数。<br>模型输出$ \hat{y} $是对真实值$ y $（又称标签）的估计。我们通常允许他们之间有一定的误差。<br>而$ x $则称为样本的特征，用来表征样本的特点。</p>
-<p>在机器学习里，将衡量误差的函数称为损失函数。这里我们使用平方误差函数，即：</p>
-<script type="math/tex; mode=display">l^{(i)}(\omega _{1},\omega _{2},\omega _{3},b)=\frac{1}{2}(\hat{y} ^{(i)}-y^{(i)} ) ^{2}</script><p>其中常数$ \frac{1}{2} $使对平方项求导后的常数系数为1，这样在形式上稍微简单一些。</p>
-<p>在求数值解的优化算法中，小批量随机梯度下降在深度学习中被广泛使用。<br>线性回归模型的过程中，模型的每个参数将作如下迭代：</p>
-<script type="math/tex; mode=display">\omega _{1}\gets\omega _{1}-\frac{\eta }{\left |B \right | }\sum_{i\in B}^{} \frac{\partial l^{(i)}(\omega _{1},\omega _{2},\omega _{3},b)}{\partial \omega _{1}}</script><p>在上式中，$ \left |B  \right | $代表每个小批量中的样本个数，$ \eta $ 称作学习率并取正数。</p>
-<h3 id="生成数据集"><a href="#生成数据集" class="headerlink" title="生成数据集"></a>生成数据集</h3><p>设训练数据集样本数为1000，输入个数（特征数）为3。给定随机生成的批量样本特征。<br>使用线性回归模型真实权重$\omega =\left [ 2,-2.3,6 \right ] ^{\top } $和偏差$ b=4.2 $以及一个随机噪声项$ \varepsilon $来生成标签。<br>其中噪声项$ \varepsilon $服从均值为0、标准差为0.01的正态分布。<br>生成数据集代码如下：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> random</span><br><span class="line"></span><br><span class="line"><span class="comment">#生成数据集</span></span><br><span class="line">num_inputs = <span class="number">3</span></span><br><span class="line">num_examples = <span class="number">1000</span></span><br><span class="line">true_w = [<span class="number">2</span>, -<span class="number">2.3</span>, <span class="number">6</span>]</span><br><span class="line">true_b = <span class="number">4.5</span></span><br><span class="line">features = torch.randn(num_examples, num_inputs,</span><br><span class="line">                       dtype=torch.float32)</span><br><span class="line">labels = true_w[<span class="number">0</span>] * features[:, <span class="number">0</span>] + true_w[<span class="number">1</span>] * features[:, <span class="number">1</span>] + true_w[<span class="number">2</span>] * features[:, <span class="number">2</span>] + true_b</span><br><span class="line">noise = torch.tensor(np.random.normal(<span class="number">0</span>, <span class="number">0.01</span>, size=labels.size()),</span><br><span class="line">                       dtype=torch.float32)</span><br><span class="line">labels += noise</span><br></pre></td></tr></table></figure></p>
-<h3 id="读取数据"><a href="#读取数据" class="headerlink" title="读取数据"></a>读取数据</h3><p>在训练模型的时候，我们需要遍历数据集并不断读取小批量数据样本。<br>这里我们定义一个函数：它每次返回batch_size（批量大小）个随机样本的特征和标签。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#遍历数据集并不断读取小批量数据样本,每次返回batch_size（批量大小）个随机样本的特征和标签。</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">data_iter</span>(<span class="params">batch_size, features, labels</span>):</span><br><span class="line">    num_examples = <span class="built_in">len</span>(features)</span><br><span class="line">    indices = <span class="built_in">list</span>(<span class="built_in">range</span>(num_examples))</span><br><span class="line">    random.shuffle(indices)  <span class="comment"># 样本的读取顺序是随机的</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>, num_examples, batch_size):</span><br><span class="line">        j = torch.LongTensor(indices[i: <span class="built_in">min</span>(i + batch_size, num_examples)]) <span class="comment"># 最后一次可能不足一个batch</span></span><br><span class="line">        <span class="keyword">yield</span>  features.index_select(<span class="number">0</span>, j), labels.index_select(<span class="number">0</span>, j)</span><br></pre></td></tr></table></figure></p>
-<h3 id="模型函数"><a href="#模型函数" class="headerlink" title="模型函数"></a>模型函数</h3><p>下面是线性回归的矢量计算表达式的实现。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#使用mm函数做矩阵乘法</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">linreg</span>(<span class="params">X, w, b</span>):  </span><br><span class="line">    <span class="keyword">return</span> torch.mm(X, w) + b</span><br></pre></td></tr></table></figure><br>用平方损失来定义线性回归的损失函数。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#损失函数</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">squared_loss</span>(<span class="params">y_pred, y</span>):  </span><br><span class="line">    <span class="keyword">return</span> (y_pred - y.view(y_pred.size())) ** <span class="number">2</span> / <span class="number">2</span></span><br></pre></td></tr></table></figure><br>以下的sgd函数实现了上一节中介绍的小批量随机梯度下降算法。<br>它通过不断迭代模型参数来优化损失函数。<br>这里自动求梯度模块计算得来的梯度是一个批量样本的梯度和。<br>我们将它除以批量大小来得到平均值。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">sgd</span>(<span class="params">params, lr, batch_size</span>): </span><br><span class="line">    <span class="keyword">for</span> param <span class="keyword">in</span> params:</span><br><span class="line">        param.data -= lr * param.grad / batch_size</span><br></pre></td></tr></table></figure></p>
-<h3 id="参数初始化"><a href="#参数初始化" class="headerlink" title="参数初始化"></a>参数初始化</h3><p>我们将权重初始化成均值为0、标准差为0.01的正态随机数，偏差则初始化成0。<br>之后的模型训练中，需要对这些参数求梯度来迭代参数的值，因此打开Autograd。<br>学习率设为0.03，迭代周期个数设为3。<br>批量大小最好为2的幂次，设为8。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">w = torch.tensor(np.random.normal(<span class="number">0</span>, <span class="number">0.01</span>, (num_inputs, <span class="number">1</span>)), dtype=torch.float32, requires_grad=<span class="literal">True</span>)</span><br><span class="line">b = torch.zeros(<span class="number">1</span>, dtype=torch.float32, requires_grad=<span class="literal">True</span>)</span><br><span class="line">lr = <span class="number">0.03</span> <span class="comment">#学习率</span></span><br><span class="line">num_epochs = <span class="number">3</span> <span class="comment">#迭代周期</span></span><br><span class="line">batch_size = <span class="number">8</span> <span class="comment">#批量大小</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="模型训练"><a href="#模型训练" class="headerlink" title="模型训练"></a>模型训练</h3><p>在训练中，我们将多次迭代模型参数。<br>在每次迭代中，我们根据当前读取的小批量数据样本（特征X和标签y），<br>通过调用反向函数backward计算小批量随机梯度，并调用优化算法sgd迭代模型参数。<br>在一个迭代周期（epoch）中，我们将完整遍历一遍data_iter函数，并对训练数据集中所有样本都使用一次。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="built_in">range</span>(num_epochs):  </span><br><span class="line">    <span class="keyword">for</span> X, y <span class="keyword">in</span> data_iter(batch_size, features, labels):</span><br><span class="line">        l = squared_loss(linreg(X, w, b), y).<span class="built_in">sum</span>()  <span class="comment"># l是有关小批量X和y的损失之和</span></span><br><span class="line">        l.backward()  <span class="comment"># 小批量的损失对模型参数求梯度</span></span><br><span class="line">        sgd([w, b], lr, batch_size)  <span class="comment"># 使用小批量随机梯度下降迭代模型参数</span></span><br><span class="line"></span><br><span class="line">        <span class="comment"># 梯度清零</span></span><br><span class="line">        w.grad.data.zero_()</span><br><span class="line">        b.grad.data.zero_()</span><br><span class="line">    train_l = squared_loss(linreg(features, w, b), labels)</span><br><span class="line">    losses.append(train_l.mean().item())</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;epoch %d, loss %f&#x27;</span> % (epoch + <span class="number">1</span>, train_l.mean().item()))</span><br></pre></td></tr></table></figure><br>输出：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">epoch 1, loss 0.012331</span><br><span class="line">epoch 2, loss 0.000054</span><br><span class="line">epoch 3, loss 0.000049</span><br></pre></td></tr></table></figure></p>
-<h3 id="模型输出"><a href="#模型输出" class="headerlink" title="模型输出"></a>模型输出</h3><p>比较学到的参数和用来生成训练集的真实参数。它们很接近。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print</span>(true_w, <span class="string">&#x27;\n&#x27;</span>, w)</span><br><span class="line"><span class="built_in">print</span>(true_b, <span class="string">&#x27;\n&#x27;</span>, b)</span><br></pre></td></tr></table></figure><br>输出：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[2, -2.3, 6]</span><br><span class="line"> tensor([[ 2.0001],</span><br><span class="line">        [-2.3000],</span><br><span class="line">        [ 5.9997]], requires_grad=True)</span><br><span class="line">4.5</span><br><span class="line"> tensor([4.5000], requires_grad=True)</span><br></pre></td></tr></table></figure></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-
   
 
 
@@ -421,6 +278,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Import-packages"><span class="nav-number">1.</span> <span class="nav-text">Import packages</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Some-Utility-Functions"><span class="nav-number">2.</span> <span class="nav-text">Some Utility Functions</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Dataset"><span class="nav-number">3.</span> <span class="nav-text">Dataset</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Neural-Network-Model"><span class="nav-number">4.</span> <span class="nav-text">Neural Network Model</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Feature-Selection"><span class="nav-number">5.</span> <span class="nav-text">Feature Selection</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Training-Loop"><span class="nav-number">6.</span> <span class="nav-text">Training Loop</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Configurations"><span class="nav-number">7.</span> <span class="nav-text">Configurations</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Dataloader"><span class="nav-number">8.</span> <span class="nav-text">Dataloader</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Start-training"><span class="nav-number">9.</span> <span class="nav-text">Start training</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Prediction"><span class="nav-number">10.</span> <span class="nav-text">Prediction</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
