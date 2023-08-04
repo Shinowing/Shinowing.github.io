@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="在本次作业中，正常的一段音频素材可能包含大量的音位信息，而音位之间又可能存在重叠干扰的情况，因此我们将一段音频素材每隔10ms切取25ms，以此来尽可能保存完整的音位素材，取出后的素材称为一个frame，取出后的frame并不适合直接进入训练，因此我们要进行进一步的处理，通过MFCC，将它转化为一个39维度的特征，转换后为了更加精确的判断当前特征内的音位信息，我们往往采取其前后的特征来做辅助判断">
+<meta property="og:type" content="article">
+<meta property="og:title" content="音位分类">
+<meta property="og:url" content="http://example.com/2023/08/04/frame/index.html">
+<meta property="og:site_name" content="暑期实习博客">
+<meta property="og:description" content="在本次作业中，正常的一段音频素材可能包含大量的音位信息，而音位之间又可能存在重叠干扰的情况，因此我们将一段音频素材每隔10ms切取25ms，以此来尽可能保存完整的音位素材，取出后的素材称为一个frame，取出后的frame并不适合直接进入训练，因此我们要进行进一步的处理，通过MFCC，将它转化为一个39维度的特征，转换后为了更加精确的判断当前特征内的音位信息，我们往往采取其前后的特征来做辅助判断">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-08-04T04:51:32.986Z">
+<meta property="article:modified_time" content="2023-08-04T07:42:32.652Z">
+<meta property="article:author" content="时骅">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2023/08/04/frame/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>音位分类 | 暑期实习博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+<!-- hexo injector head_end end --></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">暑期实习博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/08/04/frame/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="时骅">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="暑期实习博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          音位分类
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-08-04 12:51:32 / 修改时间：15:42:32" itemprop="dateCreated datePublished" datetime="2023-08-04T12:51:32+08:00">2023-08-04</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在本次作业中，正常的一段音频素材可能包含大量的<strong>音位</strong>信息，而音位之间又可能存在重叠干扰的情况，因此我们将一段音频素材每隔10ms切取25ms，以此来尽可能保存完整的音位素材，取出后的素材称为一个frame，取出后的frame并不适合直接进入训练，因此我们要进行进一步的处理，通过MFCC，将它转化为一个39维度的特征，转换后为了更加精确的判断当前特征内的音位信息，我们往往采取其前后的特征来做辅助判断 也就是前向特征与后向特征各取5个，所以我们最后得到的是一个11*39维的一个向量。</p>
+<h3 id="概念解释"><a href="#概念解释" class="headerlink" title="概念解释"></a>概念解释</h3><p>音位：(phonetics 语音) 音位，音素（区分单词的最小语音单位，英语sip中的s和zip中的z是两个不同的音素）<br>MFCC：在语音识别（Speech recognition）和话者识别（Speaker recognition）方面，最常用到的语音特征就是梅尔倒谱系数（Mel-scale Frequency Cepstral Coefficients, MFCC）。</p>
+<h3 id="数据分析"><a href="#数据分析" class="headerlink" title="数据分析"></a>数据分析</h3><p>需要处理的数据有三个txt文件和一个frame文件夹，后者储存了音频文件的训练集与测试集。<br>train_split.txt: 其中每一行对应一个训练数据，其所对应的文件在feat/train/中；<br>train_labels.txt: 由训练数据和labels组成，格式为: filename labels。其中，label 为 frame 对应的 phoneme；<br>test_split.txt: 其中每一行对应一个训练数据，其所对应的文件在feat/test/中；<br>feat/train/{id}.pt 和 feat/test/{id}.pt: 音频对应的 MFCC w/ CMVN，维度为39，这些文件可以通过torch.load()直接导入，导入后的shape为(T, 39)。</p>
+<h3 id="数据准备"><a href="#数据准备" class="headerlink" title="数据准备"></a>数据准备</h3><p>首先导入各种库，准备四个处理数据的函数。<br>load_feat函数用于加载特征文件，使用torch.load函数加载路径下的文件，并将加载的结果返回。<br>shift函数用于对特征进行平移操作，它接受两个参数：x为输入的特征向量，n为平移的步数。如果n小于0，则将x的第一个元素重复-n次作为左边的填充，将x的前n个元素作为右边的填充；如果n大于0，则将x的最后一个元素重复n次作为右边的填充，将x的后n个元素作为左边的填充；如果n等于0，则直接返回x。<br>concat_feat函数用于对特征进行拼接操作，它接受两个参数：x为输入的特征矩阵，concat_n为要拼接的帧数。<br>preprocess_data函数用于数据预处理，函数中首先定义了一个class_num变量，表示类别数量。然后根据split确定mode（训练集、验证集或测试集）。接下来根据split划分数据集。然后遍历usage_list中的每个文件名，加载对应的特征文件，将其进行拼接，并将拼接后的特征存储在X中。如果不是测试集，还会将对应的标签存储在y中。最后根据实际使用的长度截取X和y，并打印相关信息。如果是测试集，只返回X。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> random</span><br><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">from</span> tqdm <span class="keyword">import</span> tqdm</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">load_feat</span>(<span class="params">path</span>):</span><br><span class="line">    feat = torch.load(path)</span><br><span class="line">    <span class="keyword">return</span> feat</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">shift</span>(<span class="params">x, n</span>):</span><br><span class="line">    <span class="keyword">if</span> n &lt; <span class="number">0</span>:</span><br><span class="line">        left = x[<span class="number">0</span>].repeat(-n, <span class="number">1</span>)</span><br><span class="line">        right = x[:n]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">elif</span> n &gt; <span class="number">0</span>:</span><br><span class="line">        right = x[-<span class="number">1</span>].repeat(n, <span class="number">1</span>)</span><br><span class="line">        left = x[n:]</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="keyword">return</span> x</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> torch.cat((left, right), dim=<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">concat_feat</span>(<span class="params">x, concat_n</span>):</span><br><span class="line">    <span class="keyword">assert</span> concat_n % <span class="number">2</span> == <span class="number">1</span> <span class="comment"># n must be odd</span></span><br><span class="line">    <span class="keyword">if</span> concat_n &lt; <span class="number">2</span>:</span><br><span class="line">        <span class="keyword">return</span> x</span><br><span class="line">    seq_len, feature_dim = x.size(<span class="number">0</span>), x.size(<span class="number">1</span>)</span><br><span class="line">    x = x.repeat(<span class="number">1</span>, concat_n) </span><br><span class="line">    x = x.view(seq_len, concat_n, feature_dim).permute(<span class="number">1</span>, <span class="number">0</span>, <span class="number">2</span>) <span class="comment"># concat_n, seq_len, feature_dim</span></span><br><span class="line">    mid = (concat_n // <span class="number">2</span>)</span><br><span class="line">    <span class="keyword">for</span> r_idx <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>, mid+<span class="number">1</span>):</span><br><span class="line">        x[mid + r_idx, :] = shift(x[mid + r_idx], r_idx)</span><br><span class="line">        x[mid - r_idx, :] = shift(x[mid - r_idx], -r_idx)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> x.permute(<span class="number">1</span>, <span class="number">0</span>, <span class="number">2</span>).view(seq_len, concat_n * feature_dim)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">preprocess_data</span>(<span class="params">split, feat_dir, phone_path, concat_nframes, train_ratio=<span class="number">0.8</span>, train_val_seed=<span class="number">1337</span></span>):</span><br><span class="line">    class_num = <span class="number">41</span> <span class="comment"># <span class="doctag">NOTE:</span> pre-computed, should not need change</span></span><br><span class="line">    mode = <span class="string">&#x27;train&#x27;</span> <span class="keyword">if</span> (split == <span class="string">&#x27;train&#x27;</span> <span class="keyword">or</span> split == <span class="string">&#x27;val&#x27;</span>) <span class="keyword">else</span> <span class="string">&#x27;test&#x27;</span></span><br><span class="line"></span><br><span class="line">    label_dict = &#123;&#125;</span><br><span class="line">    <span class="keyword">if</span> mode != <span class="string">&#x27;test&#x27;</span>:</span><br><span class="line">      phone_file = <span class="built_in">open</span>(os.path.join(phone_path, <span class="string">f&#x27;<span class="subst">&#123;mode&#125;</span>_labels.txt&#x27;</span>)).readlines()</span><br><span class="line"></span><br><span class="line">      <span class="keyword">for</span> line <span class="keyword">in</span> phone_file:</span><br><span class="line">          line = line.strip(<span class="string">&#x27;\n&#x27;</span>).split(<span class="string">&#x27; &#x27;</span>)</span><br><span class="line">          label_dict[line[<span class="number">0</span>]] = [<span class="built_in">int</span>(p) <span class="keyword">for</span> p <span class="keyword">in</span> line[<span class="number">1</span>:]]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> split == <span class="string">&#x27;train&#x27;</span> <span class="keyword">or</span> split == <span class="string">&#x27;val&#x27;</span>:</span><br><span class="line">        <span class="comment"># split training and validation data</span></span><br><span class="line">        usage_list = <span class="built_in">open</span>(os.path.join(phone_path, <span class="string">&#x27;train_split.txt&#x27;</span>)).readlines()</span><br><span class="line">        random.seed(train_val_seed)</span><br><span class="line">        random.shuffle(usage_list)</span><br><span class="line">        percent = <span class="built_in">int</span>(<span class="built_in">len</span>(usage_list) * train_ratio)</span><br><span class="line">        usage_list = usage_list[:percent] <span class="keyword">if</span> split == <span class="string">&#x27;train&#x27;</span> <span class="keyword">else</span> usage_list[percent:]</span><br><span class="line">    <span class="keyword">elif</span> split == <span class="string">&#x27;test&#x27;</span>:</span><br><span class="line">        usage_list = <span class="built_in">open</span>(os.path.join(phone_path, <span class="string">&#x27;test_split.txt&#x27;</span>)).readlines()</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="keyword">raise</span> ValueError(<span class="string">&#x27;Invalid \&#x27;split\&#x27; argument for dataset: PhoneDataset!&#x27;</span>)</span><br><span class="line"></span><br><span class="line">    usage_list = [line.strip(<span class="string">&#x27;\n&#x27;</span>) <span class="keyword">for</span> line <span class="keyword">in</span> usage_list]</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;[Dataset] - # phone classes: &#x27;</span> + <span class="built_in">str</span>(class_num) + <span class="string">&#x27;, number of utterances for &#x27;</span> + split + <span class="string">&#x27;: &#x27;</span> + <span class="built_in">str</span>(<span class="built_in">len</span>(usage_list)))</span><br><span class="line"></span><br><span class="line">    max_len = <span class="number">3000000</span></span><br><span class="line">    X = torch.empty(max_len, <span class="number">39</span> * concat_nframes)</span><br><span class="line">    <span class="keyword">if</span> mode != <span class="string">&#x27;test&#x27;</span>:</span><br><span class="line">      y = torch.empty(max_len, dtype=torch.long)</span><br><span class="line"></span><br><span class="line">    idx = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> i, fname <span class="keyword">in</span> tqdm(<span class="built_in">enumerate</span>(usage_list)):</span><br><span class="line">        feat = load_feat(os.path.join(feat_dir, mode, <span class="string">f&#x27;<span class="subst">&#123;fname&#125;</span>.pt&#x27;</span>))</span><br><span class="line">        cur_len = <span class="built_in">len</span>(feat)</span><br><span class="line">        feat = concat_feat(feat, concat_nframes)</span><br><span class="line">        <span class="keyword">if</span> mode != <span class="string">&#x27;test&#x27;</span>:</span><br><span class="line">          label = torch.LongTensor(label_dict[fname])</span><br><span class="line"></span><br><span class="line">        X[idx: idx + cur_len, :] = feat</span><br><span class="line">        <span class="keyword">if</span> mode != <span class="string">&#x27;test&#x27;</span>:</span><br><span class="line">          y[idx: idx + cur_len] = label</span><br><span class="line"></span><br><span class="line">        idx += cur_len</span><br><span class="line"></span><br><span class="line">    X = X[:idx, :]</span><br><span class="line">    <span class="keyword">if</span> mode != <span class="string">&#x27;test&#x27;</span>:</span><br><span class="line">      y = y[:idx]</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;[INFO] <span class="subst">&#123;split&#125;</span> set&#x27;</span>)</span><br><span class="line">    <span class="built_in">print</span>(X.shape)</span><br><span class="line">    <span class="keyword">if</span> mode != <span class="string">&#x27;test&#x27;</span>:</span><br><span class="line">      <span class="built_in">print</span>(y.shape)</span><br><span class="line">      <span class="keyword">return</span> X, y</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">      <span class="keyword">return</span> X</span><br></pre></td></tr></table></figure></p>
+<h3 id="数据集定义"><a href="#数据集定义" class="headerlink" title="数据集定义"></a>数据集定义</h3><p>这是一个用于创建数据集的类。它接受输入数据X和可选的标签y，并将它们存储在self.data和self.label中。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> Dataset</span><br><span class="line"><span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> DataLoader</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">LibriDataset</span>(<span class="title class_ inherited__">Dataset</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, X, y=<span class="literal">None</span></span>):</span><br><span class="line">        self.data = X</span><br><span class="line">        <span class="keyword">if</span> y <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            self.label = torch.LongTensor(y)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            self.label = <span class="literal">None</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__getitem__</span>(<span class="params">self, idx</span>):</span><br><span class="line">        <span class="keyword">if</span> self.label <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            <span class="keyword">return</span> self.data[idx], self.label[idx]</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">return</span> self.data[idx]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__len__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">len</span>(self.data)</span><br></pre></td></tr></table></figure></p>
+<h3 id="模型定义"><a href="#模型定义" class="headerlink" title="模型定义"></a>模型定义</h3><p>基础模型定义中依旧包含了上次作业中采用的批量归一化层和Dropout层。<br>Classifier类是一个分类器模型，它由多个BasicBlock组成。它的输入维度为input_dim，输出维度为output_dim。hidden_layers参数指定了隐藏层的数量，hidden_dim参数指定了隐藏层的维度。在forward方法中，输入数据经过多个BasicBlock后，最终通过一个线性层映射到output_dim维度，得到分类结果。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn</span><br><span class="line"><span class="keyword">import</span> torch.nn.functional <span class="keyword">as</span> F</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">BasicBlock</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, input_dim, output_dim</span>):</span><br><span class="line">        <span class="built_in">super</span>(BasicBlock, self).__init__()</span><br><span class="line"></span><br><span class="line">        self.block = nn.Sequential(</span><br><span class="line">            nn.Linear(input_dim, output_dim),</span><br><span class="line">            nn.ReLU(),</span><br><span class="line">            nn.BatchNorm1d(output_dim),</span><br><span class="line">            nn.Dropout(<span class="number">0.35</span>),</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x</span>):</span><br><span class="line">        x = self.block(x)</span><br><span class="line">        <span class="keyword">return</span> x</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Classifier</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, input_dim, output_dim=<span class="number">41</span>, hidden_layers=<span class="number">1</span>, hidden_dim=<span class="number">256</span></span>):</span><br><span class="line">        <span class="built_in">super</span>(Classifier, self).__init__()</span><br><span class="line"></span><br><span class="line">        self.fc = nn.Sequential(</span><br><span class="line">            BasicBlock(input_dim, hidden_dim),</span><br><span class="line">            *[BasicBlock(hidden_dim, hidden_dim) <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(hidden_layers)],</span><br><span class="line">            nn.Linear(hidden_dim, output_dim)</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x</span>):</span><br><span class="line">        x = self.fc(x)</span><br><span class="line">        <span class="keyword">return</span> x</span><br></pre></td></tr></table></figure></p>
+<h3 id="超参数定义"><a href="#超参数定义" class="headerlink" title="超参数定义"></a>超参数定义</h3><p>在参考代码上做了一些调整，对train_labels.txt文件进行统计，发现每一个音位占用的frame均值是9个，因此可以将concat_nframes参数设置为&gt;9（必须为奇数），经尝试可以将concat_nframes设置的大些，这里我设置为19。网络架构调整的更宽和稍深。batch_size设置为2048。设置三个宽度为1024的隐藏层。学习率也可以稍微调整的大些。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># data prarameters</span></span><br><span class="line">concat_nframes = <span class="number">19</span>            <span class="comment"># the number of frames to concat with, n must be odd (total 2k+1 = n frames)</span></span><br><span class="line">train_ratio = <span class="number">0.8</span>               <span class="comment"># the ratio of data used for training, the rest will be used for validation</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># training parameters</span></span><br><span class="line">seed = <span class="number">0</span>                        <span class="comment"># random seed</span></span><br><span class="line">batch_size = <span class="number">2048</span>                <span class="comment"># batch size</span></span><br><span class="line">num_epoch = <span class="number">50</span>                   <span class="comment"># the number of training epoch</span></span><br><span class="line">early_stopping = <span class="number">8</span></span><br><span class="line">learning_rate = <span class="number">0.0001</span>            <span class="comment">#learning rate</span></span><br><span class="line">model_path = <span class="string">&#x27;./model.ckpt&#x27;</span>     <span class="comment"># the path where the checkpoint will be saved</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># model parameters</span></span><br><span class="line">input_dim = <span class="number">39</span> * concat_nframes <span class="comment"># the input dim of the model, you should not change the value</span></span><br><span class="line">hidden_layers = <span class="number">3</span>              <span class="comment"># the number of hidden layers</span></span><br><span class="line">hidden_dim = <span class="number">1024</span>              <span class="comment"># the hidden dim</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="数据集与模型加载"><a href="#数据集与模型加载" class="headerlink" title="数据集与模型加载"></a>数据集与模型加载</h3><p>首先，preprocess_data函数对数据进行预处理。split参数指定了数据集的划分（训练集或验证集），feat_dir参数指定了特征文件的路径，phone_path参数指定了标签文件的路径，concat_nframes参数指定了特征拼接的帧数，train_ratio参数指定了训练集的比例。预处理后得到训练集的特征数据train_X和标签数据train_y，以及验证集的特征数据val_X和标签数据val_y。<br>然后，通过LibriDataset类将特征数据和标签数据封装成数据集对象。train_set表示训练集数据集，val_set表示验证集数据集。<br>接下来，为了释放内存，使用del语句删除了train_X、train_y、val_X、val_y这些不再需要的变量，并通过gc.collect()回收垃圾。<br>最后，通过DataLoader类将数据集对象转换成数据加载器对象。train_loader表示训练集的数据加载器，val_loader表示验证集的数据加载器。batch_size参数指定了每个批次的样本数量，shuffle参数指定了是否对数据进行洗牌。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> gc</span><br><span class="line"></span><br><span class="line"><span class="comment"># preprocess data</span></span><br><span class="line">train_X, train_y = preprocess_data(split=<span class="string">&#x27;train&#x27;</span>, feat_dir=<span class="string">&#x27;./libriphone/feat&#x27;</span>, phone_path=<span class="string">&#x27;./libriphone&#x27;</span>, concat_nframes=concat_nframes, train_ratio=train_ratio)</span><br><span class="line">val_X, val_y = preprocess_data(split=<span class="string">&#x27;val&#x27;</span>, feat_dir=<span class="string">&#x27;./libriphone/feat&#x27;</span>, phone_path=<span class="string">&#x27;./libriphone&#x27;</span>, concat_nframes=concat_nframes, train_ratio=train_ratio)</span><br><span class="line"></span><br><span class="line"><span class="comment"># get dataset</span></span><br><span class="line">train_set = LibriDataset(train_X, train_y)</span><br><span class="line">val_set = LibriDataset(val_X, val_y)</span><br><span class="line"></span><br><span class="line"><span class="comment"># remove raw feature to save memory</span></span><br><span class="line"><span class="keyword">del</span> train_X, train_y, val_X, val_y</span><br><span class="line">gc.collect()</span><br><span class="line"></span><br><span class="line"><span class="comment"># get dataloader</span></span><br><span class="line">train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=<span class="literal">True</span>)</span><br><span class="line">val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=<span class="literal">False</span>)</span><br></pre></td></tr></table></figure><br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">[Dataset] - <span class="comment"># phone classes: 41, number of utterances for train: 3428</span></span><br><span class="line">3428it [00:16, 213.27it/s]</span><br><span class="line">[INFO] train <span class="built_in">set</span></span><br><span class="line">torch.Size([2116368, 741])</span><br><span class="line">torch.Size([2116368])</span><br><span class="line">[Dataset] - <span class="comment"># phone classes: 41, number of utterances for val: 858</span></span><br><span class="line">858it [00:04, 198.50it/s]</span><br><span class="line">[INFO] val <span class="built_in">set</span></span><br><span class="line">torch.Size([527790, 741])</span><br><span class="line">torch.Size([527790])</span><br></pre></td></tr></table></figure><br>设备设为GPU。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">device = <span class="string">&#x27;cuda:0&#x27;</span> <span class="keyword">if</span> torch.cuda.is_available() <span class="keyword">else</span> <span class="string">&#x27;cpu&#x27;</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&#x27;DEVICE: <span class="subst">&#123;device&#125;</span>&#x27;</span>)</span><br></pre></td></tr></table></figure><br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">DEVICE: cuda:0</span><br></pre></td></tr></table></figure><br>首先利用same_seeds函数确定结果可复现。<br>然后，通过Classifier类创建了一个模型对象model。<br>接下来，定义了损失函数criterion。这里使用了交叉熵损失函数，用于多分类任务。<br>然后，定义了优化器optimizer。使用了AdamW优化器，并将模型的参数传递给优化器。lr参数指定了学习率为原参数的5倍，weight_decay参数指定了权重衰减（0.01）。<br>最后，定义了学习率调度器scheduler。使用了余弦退火重启调度器，并将优化器和相关参数传递给调度器。这个调度器可以在训练过程中动态地调整学习率。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"><span class="comment">#fix seed</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">same_seeds</span>(<span class="params">seed</span>):</span><br><span class="line">    torch.manual_seed(seed)</span><br><span class="line">    <span class="keyword">if</span> torch.cuda.is_available():</span><br><span class="line">        torch.cuda.manual_seed(seed)</span><br><span class="line">        torch.cuda.manual_seed_all(seed)  </span><br><span class="line">    np.random.seed(seed)  </span><br><span class="line">    torch.backends.cudnn.benchmark = <span class="literal">False</span></span><br><span class="line">    torch.backends.cudnn.deterministic = <span class="literal">True</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># fix random seed</span></span><br><span class="line">same_seeds(seed)</span><br><span class="line"></span><br><span class="line"><span class="comment"># create model, define a loss function, and optimizer</span></span><br><span class="line">model = Classifier(input_dim=input_dim, hidden_layers=hidden_layers, hidden_dim=hidden_dim).to(device)</span><br><span class="line">criterion = nn.CrossEntropyLoss() </span><br><span class="line">optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate*<span class="number">5</span>, weight_decay=<span class="number">0.01</span>)</span><br><span class="line">scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, </span><br><span class="line">                                        T_0=<span class="number">8</span>, T_mult=<span class="number">2</span>, eta_min=learning_rate/<span class="number">2</span>)</span><br></pre></td></tr></table></figure></p>
+<h3 id="训练"><a href="#训练" class="headerlink" title="训练"></a>训练</h3><p>下面这段代码是模型的训练和验证过程。<br>首先，定义了初始的最佳准确率best_acc和早停计数器early_stop_count。<br>然后，进入每个训练轮次的循环。在每个训练轮次中，初始化训练准确率train_acc和训练损失train_loss，验证准确率val_acc和验证损失val_loss。<br>接下来，将模型设置为训练模式（model.train()）。使用tqdm库创建一个进度条pbar，用于显示训练进度。对于每个批次（batch）数据，进行前向传播、计算损失、反向传播和优化器更新。同时计算训练准确率和训练损失，并更新进度条的显示。最后，使用学习率调度器更新学习率，并关闭进度条。<br>接下来，如果存在验证集（len(val_set) &gt; 0），则进入验证阶段。将模型设置为评估模式（model.eval()），并使用torch.no_grad()关闭梯度计算。同样使用tqdm库创建一个进度条pbar，用于显示验证进度。对于每个批次数据，将特征数据和标签数据移动到指定的设备上，并进行前向传播和计算损失。同时计算验证准确率和验证损失，并更新进度条的显示。最后，如果验证准确率超过了最佳准确率best_acc，则保存模型的权重，并打印出当前最佳准确率。如果验证准确率没有提升，则增加早停计数器early_stop_count。如果早停计数器达到了早停次数（early_stopping），则打印出早停信息并跳出训练轮次的循环。<br>最后，如果没有验证集（len(val_set) == 0），则直接保存最后一个训练轮次的模型权重。<br>总结起来，这段代码实现了模型的训练和验证过程，并在验证准确率提升时保存模型的权重，如果验证准确率连续多次没有提升则进行早停。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line">best_acc = <span class="number">0.0</span></span><br><span class="line">early_stop_count = <span class="number">0</span></span><br><span class="line"><span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="built_in">range</span>(num_epoch):</span><br><span class="line">    train_acc = <span class="number">0.0</span></span><br><span class="line">    train_loss = <span class="number">0.0</span></span><br><span class="line">    val_acc = <span class="number">0.0</span></span><br><span class="line">    val_loss = <span class="number">0.0</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment"># training</span></span><br><span class="line">    model.train() <span class="comment"># set the model to training mode</span></span><br><span class="line">    pbar = tqdm(train_loader, ncols=<span class="number">110</span>)</span><br><span class="line">    pbar.set_description(<span class="string">f&#x27;T: <span class="subst">&#123;epoch+<span class="number">1</span>&#125;</span>/<span class="subst">&#123;num_epoch&#125;</span>&#x27;</span>)</span><br><span class="line">    samples = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> i, batch <span class="keyword">in</span> <span class="built_in">enumerate</span>(pbar):</span><br><span class="line">        features, labels = batch</span><br><span class="line">        features = features.to(device)</span><br><span class="line">        labels = labels.to(device)</span><br><span class="line">        </span><br><span class="line">        optimizer.zero_grad() </span><br><span class="line">        outputs = model(features) </span><br><span class="line">        </span><br><span class="line">        loss = criterion(outputs, labels)</span><br><span class="line">        loss.backward() </span><br><span class="line">        optimizer.step()</span><br><span class="line">       </span><br><span class="line">        </span><br><span class="line">        _, train_pred = torch.<span class="built_in">max</span>(outputs, <span class="number">1</span>) <span class="comment"># get the index of the class with the highest probability</span></span><br><span class="line">        correct = (train_pred.detach() == labels.detach()).<span class="built_in">sum</span>().item()</span><br><span class="line">        train_acc += correct</span><br><span class="line">        samples += labels.size(<span class="number">0</span>)</span><br><span class="line">        train_loss += loss.item()</span><br><span class="line">        lr = optimizer.param_groups[<span class="number">0</span>][<span class="string">&quot;lr&quot;</span>]</span><br><span class="line">        pbar.set_postfix(&#123;<span class="string">&#x27;lr&#x27;</span>:lr, <span class="string">&#x27;batch acc&#x27;</span>:correct/labels.size(<span class="number">0</span>),</span><br><span class="line">                          <span class="string">&#x27;acc&#x27;</span>:train_acc/samples, <span class="string">&#x27;loss&#x27;</span>:train_loss/(i+<span class="number">1</span>)&#125;)</span><br><span class="line">    scheduler.step()</span><br><span class="line">    pbar.close()</span><br><span class="line">    <span class="comment"># validation</span></span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">len</span>(val_set) &gt; <span class="number">0</span>:</span><br><span class="line">        model.<span class="built_in">eval</span>() <span class="comment"># set the model to evaluation mode</span></span><br><span class="line">        <span class="keyword">with</span> torch.no_grad():</span><br><span class="line">            pbar = tqdm(val_loader, ncols=<span class="number">110</span>)</span><br><span class="line">            pbar.set_description(<span class="string">f&#x27;V: <span class="subst">&#123;epoch+<span class="number">1</span>&#125;</span>/<span class="subst">&#123;num_epoch&#125;</span>&#x27;</span>)</span><br><span class="line">            samples = <span class="number">0</span></span><br><span class="line">            <span class="keyword">for</span> i, batch <span class="keyword">in</span> <span class="built_in">enumerate</span>(pbar):</span><br><span class="line">                features, labels = batch</span><br><span class="line">                features = features.to(device)</span><br><span class="line">                labels = labels.to(device)</span><br><span class="line">                outputs = model(features)</span><br><span class="line">                </span><br><span class="line">                loss = criterion(outputs, labels) </span><br><span class="line">                </span><br><span class="line">                _, val_pred = torch.<span class="built_in">max</span>(outputs, <span class="number">1</span>) <span class="comment">#get the index of the class with the highest probability</span></span><br><span class="line">                val_acc += (val_pred.cpu() == labels.cpu()).<span class="built_in">sum</span>().item()</span><br><span class="line">                samples += labels.size(<span class="number">0</span>)</span><br><span class="line">                val_loss += loss.item()</span><br><span class="line">                pbar.set_postfix(&#123;<span class="string">&#x27;val acc&#x27;</span>:val_acc/samples ,<span class="string">&#x27;val loss&#x27;</span>:val_loss/(i+<span class="number">1</span>)&#125;)</span><br><span class="line">            pbar.close()</span><br><span class="line">            <span class="comment"># if the model improves, save a checkpoint at this epoch</span></span><br><span class="line">        <span class="keyword">if</span> val_acc &gt; best_acc:</span><br><span class="line">            best_acc = val_acc</span><br><span class="line">            torch.save(model.state_dict(), model_path)</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&#x27;saving model with acc &#123;:.3f&#125;&#x27;</span>.<span class="built_in">format</span>(best_acc/<span class="built_in">len</span>(val_set)))</span><br><span class="line">            early_stop_count = <span class="number">0</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            early_stop_count += <span class="number">1</span></span><br><span class="line">            <span class="keyword">if</span> early_stop_count &gt;= early_stopping:</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">f&quot;Epoch: <span class="subst">&#123;epoch + <span class="number">1</span>&#125;</span>, model not improving, early stopping.&quot;</span>)</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&#x27;[<span class="subst">&#123;epoch+<span class="number">1</span>:03d&#125;</span>/<span class="subst">&#123;num_epoch:03d&#125;</span>] Acc: <span class="subst">&#123;acc:<span class="number">3.6</span>f&#125;</span> Loss: <span class="subst">&#123;loss:<span class="number">3.6</span>f&#125;</span>&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># if not validating, save the last epoch</span></span><br><span class="line"><span class="keyword">if</span> <span class="built_in">len</span>(val_set) == <span class="number">0</span>:</span><br><span class="line">    torch.save(model.state_dict(), model_path)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;saving model at last epoch&#x27;</span>)</span><br></pre></td></tr></table></figure><br>训练和验证过程之后，及时释放不再需要的数据加载器对象，以减少内存占用。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">del</span> train_loader, val_loader</span><br><span class="line">gc.collect()</span><br></pre></td></tr></table></figure></p>
+<h3 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h3><p>加载测试集数据和模型。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># load data</span></span><br><span class="line">test_X = preprocess_data(split=<span class="string">&#x27;test&#x27;</span>, feat_dir=<span class="string">&#x27;./libriphone/feat&#x27;</span>, phone_path=<span class="string">&#x27;./libriphone&#x27;</span>, concat_nframes=concat_nframes)</span><br><span class="line">test_set = LibriDataset(test_X, <span class="literal">None</span>)</span><br><span class="line">test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=<span class="literal">False</span>)</span><br><span class="line"><span class="comment"># load model</span></span><br><span class="line">model = Classifier(input_dim=input_dim, hidden_layers=hidden_layers, hidden_dim=hidden_dim).to(device)</span><br><span class="line">model.load_state_dict(torch.load(model_path))</span><br></pre></td></tr></table></figure><br>接下来对测试集进行预测。<br>首先，初始化测试准确率test_acc和测试样本数量test_lengths，以及一个空的预测结果数组pred。<br>然后，将模型设置为评估模式（model.eval()），并关闭梯度计算。使用tqdm库创建一个进度条，用于显示测试进度。对每个批次的测试数据进行前向传播。使用torch.max函数获取输出中概率最高的类别索引test_pred，并将其转换为numpy数组，并将其与之前的预测结果数组pred进行拼接。<br>最后，完成所有测试数据的预测后，可以使用pred数组进行后续的评估和分析。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">test_acc = <span class="number">0.0</span></span><br><span class="line">test_lengths = <span class="number">0</span></span><br><span class="line">pred = np.array([], dtype=np.int32)</span><br><span class="line"></span><br><span class="line">model.<span class="built_in">eval</span>()</span><br><span class="line"><span class="keyword">with</span> torch.no_grad():</span><br><span class="line">    <span class="keyword">for</span> i, batch <span class="keyword">in</span> <span class="built_in">enumerate</span>(tqdm(test_loader)):</span><br><span class="line">        features = batch</span><br><span class="line">        features = features.to(device)</span><br><span class="line"></span><br><span class="line">        outputs = model(features)</span><br><span class="line"></span><br><span class="line">        _, test_pred = torch.<span class="built_in">max</span>(outputs, <span class="number">1</span>) <span class="comment"># get the index of the class with the highest probability</span></span><br><span class="line">        pred = np.concatenate((pred, test_pred.cpu().numpy()), axis=<span class="number">0</span>)</span><br></pre></td></tr></table></figure><br>保存预测数据<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">with</span> <span class="built_in">open</span>(<span class="string">&#x27;prediction.csv&#x27;</span>, <span class="string">&#x27;w&#x27;</span>) <span class="keyword">as</span> f:</span><br><span class="line">    f.write(<span class="string">&#x27;Id,Class\n&#x27;</span>)</span><br><span class="line">    <span class="keyword">for</span> i, y <span class="keyword">in</span> <span class="built_in">enumerate</span>(pred):</span><br><span class="line">        f.write(<span class="string">&#x27;&#123;&#125;,&#123;&#125;\n&#x27;</span>.<span class="built_in">format</span>(i, y))</span><br></pre></td></tr></table></figure></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/08/02/Covid-19-Pred/" rel="prev" title="COVID-19 病例预测 (回归)">
+      <i class="fa fa-chevron-left"></i> COVID-19 病例预测 (回归)
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A6%82%E5%BF%B5%E8%A7%A3%E9%87%8A"><span class="nav-number">1.</span> <span class="nav-text">概念解释</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">数据分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%87%86%E5%A4%87"><span class="nav-number">3.</span> <span class="nav-text">数据准备</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E9%9B%86%E5%AE%9A%E4%B9%89"><span class="nav-number">4.</span> <span class="nav-text">数据集定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E5%AE%9A%E4%B9%89"><span class="nav-number">5.</span> <span class="nav-text">模型定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B6%85%E5%8F%82%E6%95%B0%E5%AE%9A%E4%B9%89"><span class="nav-number">6.</span> <span class="nav-text">超参数定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E9%9B%86%E4%B8%8E%E6%A8%A1%E5%9E%8B%E5%8A%A0%E8%BD%BD"><span class="nav-number">7.</span> <span class="nav-text">数据集与模型加载</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%AD%E7%BB%83"><span class="nav-number">8.</span> <span class="nav-text">训练</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95"><span class="nav-number">9.</span> <span class="nav-text">测试</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">时骅</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">4</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">时骅</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>
